@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sensor Monitoring Dashboard</title>
+    <link href="/static/styles.css" rel="stylesheet" />
+    <!-- HTMX for dynamic updates -->
+    <script src="https://unpkg.com/htmx.org@1.9.9"></script>
+  </head>
+  <body>
+    <header>
+      <h1>Sensor Monitoring Dashboard</h1>
+    </header>
+
+    <main>
+      <section class="sensor-data">
+        <h2>Current Sensor Readings</h2>
+        <div id="current-readings">
+          <!-- Current readings will be inserted here -->
+          <div class="loading">Waiting for sensor data...</div>
+        </div>
+      </section>
+
+      <!-- Fire Alert Section - Will be updated via HTMX -->
+      <section
+        id="fire-alert-container"
+        hx-get="/fire-alert"
+        hx-trigger="every 2s"
+        hx-swap="innerHTML"
+      ></section>
+
+      <section class="history-container">
+        <h2>Recent Readings</h2>
+        <div class="readings-history" id="readings-history">
+          <!-- History will be populated by JavaScript -->
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Sensor Monitoring System &copy; 2025</p>
+    </footer>
+
+    <script>
+      // Connect to WebSocket
+      const socket = new WebSocket(`ws://${window.location.host}/ws`);
+      const historyList = document.getElementById("readings-history");
+      const readings = [];
+
+      socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+
+        // Update current readings display
+        document.getElementById("current-readings").innerHTML = `
+                <div class="reading-card">
+                    <div class="reading-item">
+                        <span class="label">Temperature:</span>
+                        <span class="value ${
+                          data.temperature > 40 ? "critical" : ""
+                        }">${data.temperature}°C</span>
+                    </div>
+                    <div class="reading-item">
+                        <span class="label">Humidity:</span>
+                        <span class="value">${data.humidity}%</span>
+                    </div>
+                    <div class="reading-item">
+                        <span class="label">Smoke Level:</span>
+                        <span class="value ${
+                          data.smoke_level > 500 ? "critical" : ""
+                        }">${data.smoke_level}</span>
+                    </div>
+                    <div class="reading-item">
+                        <span class="label">Fire Status:</span>
+                        <span class="value ${
+                          data.fire_detected ? "fire-detected" : ""
+                        }">${
+          data.fire_detected ? "🔥 DETECTED" : "Not detected"
+        }</span>
+                    </div>
+                </div>
+            `;
+
+        // Keep track of recent readings
+        readings.unshift(data);
+        if (readings.length > 5) readings.pop();
+
+        // Update history
+        updateHistory();
+
+        // If fire is detected, trigger the fire alert HTMX request immediately
+        if (data.fire_detected) {
+          htmx.trigger("#fire-alert-container", "get");
+        }
+      };
+
+      socket.onopen = function () {
+        console.log("WebSocket connection established");
+      };
+
+      socket.onerror = function (error) {
+        console.error("WebSocket error:", error);
+      };
+
+      socket.onclose = function () {
+        console.log("WebSocket connection closed");
+        // Attempt to reconnect after 5 seconds
+        setTimeout(() => {
+          window.location.reload();
+        }, 5000);
+      };
+
+      function updateHistory() {
+        historyList.innerHTML = "";
+        readings.forEach((reading, index) => {
+          const timestamp = reading.timestamp || "Unknown time";
+          const row = document.createElement("div");
+          row.className = "history-row";
+          row.innerHTML = `
+                    <div class="history-time">${timestamp}</div>
+                    <div class="history-data">
+                        <span>T: ${reading.temperature}°C</span> |
+                        <span>H: ${reading.humidity}%</span> |
+                        <span>S: ${reading.smoke_level}</span>
+                        ${
+                          reading.fire_detected
+                            ? '<span class="fire-badge">🔥</span>'
+                            : ""
+                        }
+                    </div>
+                `;
+          historyList.appendChild(row);
+        });
+      }
+    </script>
+  </body>
+</html>

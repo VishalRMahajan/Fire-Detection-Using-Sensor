@@ -1,0 +1,53 @@
+<div class="fire-alert">
+  <div class="alert-header">
+    <h2>🔥 FIRE DETECTED 🔥</h2>
+    <span class="timestamp">{{ timestamp }}</span>
+  </div>
+
+  <div class="alert-content">
+    <div class="readings-panel">
+      <div class="reading">
+        <span class="icon">🌡️</span>
+        <span class="label">Temperature:</span>
+        <span class="value critical">{{ temperature }}°C</span>
+      </div>
+      <div class="reading">
+        <span class="icon">💧</span>
+        <span class="label">Humidity:</span>
+        <span class="value">{{ humidity }}%</span>
+      </div>
+      <div class="reading">
+        <span class="icon">☁️</span>
+        <span class="label">Smoke Level:</span>
+        <span class="value critical">{{ smoke_level }}</span>
+      </div>
+    </div>
+
+    <div class="location-panel">
+      <h3>Location Information</h3>
+      <div class="coordinates">
+        <div class="coordinate">
+          <span class="label">Latitude:</span>
+          <span class="value">{{ latitude }}</span>
+        </div>
+        <div class="coordinate">
+          <span class="label">Longitude:</span>
+          <span class="value">{{ longitude }}</span>
+        </div>
+      </div>
+      <a
+        href="https://www.google.com/maps?q={{ latitude }},{{ longitude }}"
+        target="_blank"
+        class="map-link"
+      >
+        View on Map
+      </a>
+    </div>
+  </div>
+
+  <div class="alert-actions">
+    <button class="action-button primary">Contact Emergency Services</button>
+    <button class="action-button secondary">Dispatch Response Team</button>
+    <button class="action-button tertiary">Acknowledge Alert</button>
+  </div>
+</div>
